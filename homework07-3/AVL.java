@@ -4,10 +4,10 @@ import java.util.List;
 /**
  * Your implementation of an AVL.
  *
- * @author YOUR NAME HERE
+ * @author Lesaiah Tillery
  * @version 1.0
- * @userid YOUR USER ID HERE (i.e. gburdell3)
- * @GTID YOUR GT ID HERE (i.e. 900000000)
+ * @userid ltillery6
+ * @GTID 903670542
  *
  * Collaborators: LIST ALL COLLABORATORS YOU WORKED WITH HERE
  *
@@ -31,6 +31,18 @@ public class AVL<T extends Comparable<? super T>> {
         // DO NOT IMPLEMENT THIS CONSTRUCTOR!
     }
 
+    private void updateHeightBF(AVLNode<T> node) {
+        if (node == null) {
+            return;
+        }
+        if (node.getLeft() == null && node.getRight()== null) {
+            node.setHeight(0);
+            node.setBalanceFactor(0);
+            return;
+        }
+        node.setHeight(Math.max(node.getLeft().getHeight(), node.getRight().getHeight()) + 1);
+        node.setBalanceFactor(node.getLeft().getHeight() - node.getRight().getHeight());
+    }
     /**
      * Constructs a new AVL.
      *
@@ -43,7 +55,15 @@ public class AVL<T extends Comparable<? super T>> {
      *                                            is null
      */
     public AVL(Collection<T> data) {
-
+        if (data == null) {
+            throw new java.lang.IllegalArgumentException("Data is null");
+        }
+        for (T item : data) {
+            if (item == null) {
+                throw new java.lang.IllegalArgumentException("Element is null");
+            }
+            add(item);
+        }
     }
 
     /**
@@ -65,7 +85,37 @@ public class AVL<T extends Comparable<? super T>> {
      * @throws java.lang.IllegalArgumentException if data is null
      */
     public void add(T data) {
-
+        if (data == null) {
+            throw new java.lang.IllegalArgumentException("Data is null");
+        }
+        root = reAdd(root, data);
+    }
+    /**
+     * Method to recursively add data to BST
+     * @param curr current node
+     * @param data data to be added
+     */
+    private AVLNode<T> reAdd(AVLNode<T> curr, T data) {
+        AVLNode<T> newNode = new AVLNode<T>(data);
+        if (size == 0) {
+            root = newNode;
+            size++;
+            updateHeightBF(root);
+        } else {
+            if (curr.getData().compareTo(data) > 0 && curr.getLeft() != null) {
+                reAdd(curr.getLeft(), data);
+            } else if (curr.getData().compareTo(data) > 0 && curr.getLeft() == null) {
+                curr.setLeft(newNode);
+                size++;
+            } else {
+                if (curr.getRight() != null) {
+                    reAdd(curr.getRight(), data);
+                } else {
+                    curr.setRight(newNode);
+                    size++;
+                }
+            }
+        }
     }
 
     /**
@@ -139,7 +189,10 @@ public class AVL<T extends Comparable<? super T>> {
      * @return the height of the root of the tree, -1 if the tree is empty
      */
     public int height() {
-
+        if (size == 0) {
+            return -1;
+        }
+        return root.getHeight();
     }
 
     /**
@@ -148,7 +201,8 @@ public class AVL<T extends Comparable<? super T>> {
      * Clears all data and resets the size.
      */
     public void clear() {
-
+        root = null;
+        size = 0;
     }
 
     /**
