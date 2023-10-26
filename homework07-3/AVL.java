@@ -1,5 +1,4 @@
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Your implementation of an AVL.
@@ -30,6 +29,36 @@ public class AVL<T extends Comparable<? super T>> {
     public AVL() {
         // DO NOT IMPLEMENT THIS CONSTRUCTOR!
     }
+    //============IMPLEMENT THESE METHODS FIRST===============
+    //Balance the nodes, update the height/balance factors, methods to handle left/right rotations
+    /**
+     * Right rotation method
+     * @param node node to be rotated
+     * @return returns updated node
+     */
+    private AVLNode<T> rightRotate(AVLNode<T> node) {
+        AVLNode<T> c1 = node.getLeft();
+        AVLNode<T> c2 = c1.getRight();
+        c1.setRight(node);
+        node.setLeft(c2);
+        updateHeightBF(node);
+        updateHeightBF(c1);
+        return c1;
+    }
+     /**
+     * Left rotation method
+     * @param node Node to be rotated
+     * @return returns updated parent node
+     */
+    private AVLNode<T> leftRotate(AVLNode<T> node) {
+        AVLNode<T> c1 = node.getRight();
+        AVLNode<T> c2 = c1.getLeft();
+        c1.setLeft(node);
+        node.setRight(c2);
+        updateHeightBF(node);
+        updateHeightBF(c1);
+        return c1;
+    }
 
     private void updateHeightBF(AVLNode<T> node) {
         if (node == null) {
@@ -42,6 +71,24 @@ public class AVL<T extends Comparable<? super T>> {
         }
         node.setHeight(Math.max(node.getLeft().getHeight(), node.getRight().getHeight()) + 1);
         node.setBalanceFactor(node.getLeft().getHeight() - node.getRight().getHeight());
+    }
+    private AVLNode<T> balance(AVLNode<T> node) {
+        if (node == null) {
+            return null;
+        }
+        updateHeightBF(node);
+        if (node.getBalanceFactor() > 1) { // left heavy
+            if (node.getLeft().getBalanceFactor() < 0) {
+                node.setLeft(leftRotate(node.getLeft()));
+            }
+            node = rightRotate(node);
+        } else if (node.getBalanceFactor() < -1) { // right heavy
+            if (node.getRight().getBalanceFactor() > 0) {
+                node.setRight(rightRotate(node.getRight()));
+            }
+            node = leftRotate(node);
+        }
+        return node;
     }
     /**
      * Constructs a new AVL.
@@ -90,32 +137,24 @@ public class AVL<T extends Comparable<? super T>> {
         }
         root = reAdd(root, data);
     }
+    
     /**
      * Method to recursively add data to BST
      * @param curr current node
      * @param data data to be added
      */
     private AVLNode<T> reAdd(AVLNode<T> curr, T data) {
-        AVLNode<T> newNode = new AVLNode<T>(data);
-        if (size == 0) {
-            root = newNode;
+        if (curr == null) {
             size++;
-            updateHeightBF(root);
+            return new AVLNode<T>(data);
         } else {
-            if (curr.getData().compareTo(data) > 0 && curr.getLeft() != null) {
-                reAdd(curr.getLeft(), data);
-            } else if (curr.getData().compareTo(data) > 0 && curr.getLeft() == null) {
-                curr.setLeft(newNode);
-                size++;
-            } else {
-                if (curr.getRight() != null) {
-                    reAdd(curr.getRight(), data);
-                } else {
-                    curr.setRight(newNode);
-                    size++;
-                }
-            }
+            if (curr.getData().compareTo(data) > 0) {
+                curr.setLeft(reAdd(curr.getLeft(), data));
+            } else if (curr.getData().compareTo(data) < 0 ) {
+                curr.setRight(reAdd(curr.getRight(), data));
+            } 
         }
+        return balance(curr);
     }
 
     /**
@@ -146,7 +185,50 @@ public class AVL<T extends Comparable<? super T>> {
      * @throws java.util.NoSuchElementException   if the data is not found
      */
     public T remove(T data) {
+        if (data == null) {
+            throw new java.lang.IllegalArgumentException("Data is null");
+        }
+        
+    }
 
+    ==========+=============SWITCH THE TWO BELOW METHODS TO AVL STUFF=============================
+    private AVLNode<T> reRem(AVLNode<T> node, T data, AVLNode<T> dummyNode) {
+        if (node == null) {
+            throw new java.util.NoSuchElementException("Data is not in tree");
+        } else if (node.getData().compareTo(data) > 0) {
+            node.setLeft(reRem(node.getLeft(), data, dummyNode));
+        } else if (node.getData().compareTo(data) < 0) {
+            node.setRight(reRem(node.getRight(), data, dummyNode));
+        } else {
+            dummyNode.setData(node.getData());
+            size--;
+            if (node.getLeft() == null && node.getRight() == null) {
+                return null;
+            } else if (node.getLeft() == null) {
+                return node.getRight();
+            } else if (node.getRight() == null) {
+                return node.getLeft();
+            } else {
+                AVLNode<T> dNode = new AVLNode<T>(null);
+                node.setRight(findSuccessor(node.getRight(), dNode));
+                node.setData(dNode.getData());
+            }
+        }
+        return node;
+    }
+    /**
+     * Method that finds Successor
+     * @param node current node
+     * @param successor node to contain successor data
+     * @return node 
+     */
+    private AVLNode<T> findSuccessor(AVLNode<T> node, AVLNode<T> successor) {
+        if (node.getLeft() == null) {
+            successor.setData(node.getData());
+            return node.getRight();
+        }
+        node.setLeft(findSuccessor(node.getLeft(), successor));
+        return node;
     }
 
     /**
@@ -163,7 +245,20 @@ public class AVL<T extends Comparable<? super T>> {
      * @throws java.util.NoSuchElementException   if the data is not in the tree
      */
     public T get(T data) {
-
+        if (data == null) {
+            throw new java.lang.IllegalArgumentException("Data is null");
+        }
+        return reGet(root, data);
+    }
+    private T reGet(AVLNode<T> curr, T data) {
+        if (curr.getData().compareTo(data) > 0) {
+            return reGet(curr.getLeft(), data);
+        } else if (curr.getData().compareTo(data) < 0) {
+            return reGet(curr.getRight(), data);
+        } else if (curr.getData().compareTo(data) == 0) {
+            return curr.getData();
+        }
+        throw new java.util.NoSuchElementException();
     }
 
     /**
@@ -178,7 +273,20 @@ public class AVL<T extends Comparable<? super T>> {
      * @throws java.lang.IllegalArgumentException if data is null
      */
     public boolean contains(T data) {
-
+        if (data == null) {
+            throw new java.lang.IllegalArgumentException("Data is null");
+        }
+        return reCont(root, data);
+    }
+    private boolean reCont(AVLNode<T> curr, T data) {
+        if (curr.getData().compareTo(data) > 0) {
+            return reCont(curr.getLeft(), data);
+        } else if (curr.getData().compareTo(data) < 0) {
+            return reCont(curr.getRight(), data);
+        } else if (curr.getData().compareTo(data) == 0) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -237,7 +345,29 @@ public class AVL<T extends Comparable<? super T>> {
      * @throws java.util.NoSuchElementException   if the data is not in the tree
      */
     public T predecessor(T data) {
-
+        if (data == null) {
+            throw new java.lang.IllegalArgumentException("Data is null");
+        }
+        return rePred(root, data);
+    }
+    private T rePred(AVLNode<T> curr, T data) {
+        if (curr.getData().compareTo(data) > 0) {
+            return rePred(curr.getLeft(), data);
+        } else if (curr.getData().compareTo(data) < 0) {
+            return rePred(curr.getRight(), data);
+        } 
+        if (curr.getData().compareTo(data) == 0) {
+            if (curr.getLeft() != null) {
+                AVLNode<T> node = curr.getLeft();
+                while (node.getRight() != null) {
+                    node = node.getRight();
+                }
+                return node.getData();
+            }
+            return root.getData();
+            
+        }
+        throw new java.util.NoSuchElementException("Data is not in tree");
     }
 
     /**
@@ -272,7 +402,21 @@ public class AVL<T extends Comparable<? super T>> {
      * @return the data in the maximum deepest node or null if the tree is empty
      */
     public T maxDeepestNode() {
+        if (size == 0) {
+            return null;
+        }
+        return reDN(root);
+    }
+    private T reDN(AVLNode<T> curr) {
+        if (curr.getLeft().getHeight() > curr.getRight().getHeight()) {
+            return reDN(curr.getLeft());
+        } else if (curr.getLeft().getHeight() < curr.getRight().getHeight()) {
+            return reDN(curr.getRight());
+        } else if (curr.getRight().getHeight() == curr.getLeft().getHeight()) {
+            return reDN(curr.getRight());
+        }
 
+        return curr.getData();
     }
 
     /**
